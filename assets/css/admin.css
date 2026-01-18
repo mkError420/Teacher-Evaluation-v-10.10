@@ -1,0 +1,190 @@
+/* Admin Styles for Teacher Evaluation Survey Plugin */
+
+/* Student Management Styles */
+.tes-add-student-form {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.tes-add-student-form table {
+    width: 100%;
+}
+
+.tes-add-student-form input[type="text"],
+.tes-add-student-form input[type="password"] {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.tes-add-student-form input[type="text"]:focus,
+.tes-add-student-form input[type="password"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
+}
+
+.tes-add-student-form .description {
+    color: #666;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Students List Table Styles */
+.wrap table.widefat {
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+.wrap table.widefat thead {
+    background-color: #f5f5f5;
+}
+
+.wrap table.widefat thead th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+    color: #333;
+}
+
+.wrap table.widefat tbody td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.wrap table.widefat tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.wrap table.widefat code {
+    background: #f4f4f4;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: #333;
+}
+
+/* Delete Button Styles */
+.button-danger {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+}
+
+.button-danger:hover {
+    background-color: #c82333 !important;
+    border-color: #c82333 !important;
+    color: white !important;
+}
+
+/* Card Styles */
+.wrap .card {
+    background: white;
+    border: 1px solid #ccd0d7;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.wrap .card h2 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+}
+
+/* Notice Styles */
+.wrap .notice {
+    margin: 20px 0;
+}
+
+.wrap .notice.notice-success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.wrap .notice.notice-error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.wrap .notice p {
+    margin: 0;
+}
+
+/* General Admin Page Styles */
+.wrap h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.wrap .button {
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.wrap .button-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+}
+
+.wrap .button-primary:hover {
+    background: linear-gradient(135deg, #5568d3, #6a4292);
+}
+
+/* Form Table Styles */
+.wrap .form-table {
+    width: 100%;
+}
+
+.wrap .form-table th {
+    text-align: left;
+    padding: 15px;
+    font-weight: 600;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+}
+
+.wrap .form-table td {
+    padding: 15px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+}
+
+.wrap .form-table tr:hover {
+    background: #fafafa;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    .tes-add-student-form input[type="text"],
+    .tes-add-student-form input[type="password"] {
+        max-width: 100%;
+    }
+    
+    .wrap .form-table {
+        font-size: 12px;
+    }
+    
+    .wrap .form-table th,
+    .wrap .form-table td {
+        padding: 10px;
+    }
+}
