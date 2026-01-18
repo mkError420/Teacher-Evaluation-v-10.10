@@ -209,7 +209,7 @@ function tes_questions_page() {
                                 '<td><a class="button button-secondary" href="?page=tes-questions&delete=' + data.id + '">Delete</a></td>' +
                                 '</tr>';
                             $('tbody').prepend(newRow);
-                            $('#tes-add-question-form')[0].reset();
+                            $('#sub_question_title').val('');
                             $('#question_type').trigger('change');
                         } else {
                             alert(response.data);

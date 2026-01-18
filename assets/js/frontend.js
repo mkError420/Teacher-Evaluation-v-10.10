@@ -133,7 +133,7 @@ jQuery(function($) {
                                 var questionLabel = q.sub_question_title ? q.sub_question_title : q.question_text;
 
                                 html += '<div class="tes-question-block" style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee;">';
-                                html += '<p style="font-weight: 600; color: #333; margin-bottom: 15px; font-size: 1.05em;">' + (j + 1) + '. ' + questionLabel + ' <span style="color:#dc3545;">*</span></p>';
+                                html += '<p style="font-weight: bold; color: #000; background-color: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 1.1em;">' + (j + 1) + '. ' + questionLabel + ' <span style="color:#dc3545;">*</span></p>';
                                 html += '<div style="display: flex; flex-wrap: wrap; gap: 10px;">';
                                 $.each(options, function(k, option) {
                                     html += '<label style="display: inline-flex; align-items: center; padding: 8px 15px; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; user-select: none;">';
