@@ -61,9 +61,22 @@ function tes_results_page() {
                 $wpdb->prepare("SELECT * FROM $questions_table WHERE survey_id = %d", $selected_survey)
             );
 
+            // Add fixed question for results display
+            $fixed_question = new stdClass();
+            $fixed_question->id = 'fixed_implicit_role_model';
+            $fixed_question->survey_id = $selected_survey;
+            $fixed_question->question_type = 'Implicit Issues';
+            $fixed_question->question_text = 'How well does the teacher model the core values through how he/she behaves with students and with other staff persons?';
+            $fixed_question->sub_question_title = 'I follow the teacher as my role model ';
+            $fixed_question->options = 'To much extent,All Most,Yes  ';
+            if (!$all_questions) {
+                $all_questions = [];
+            }
+            $all_questions[] = $fixed_question;
+
             // Get submissions
             $submissions = $wpdb->get_results(
-                $wpdb->prepare("SELECT s.answers, s.student_name
+                $wpdb->prepare("SELECT s.answers, s.student_name, s.comment
                                 FROM $submissions_table s
                                 WHERE s.survey_id = %d", $selected_survey)
             );
@@ -83,9 +96,16 @@ function tes_results_page() {
             $answer_counts = [];
             $averages = [];
             $student_averages = [];
+            $comments = [];
             $total_sum = 0;
             $total_count = 0;
             foreach ($submissions as $sub) {
+                if (!empty($sub->comment)) {
+                    $comments[] = [
+                        'student' => $sub->student_name,
+                        'text' => $sub->comment
+                    ];
+                }
                 $answers = maybe_unserialize($sub->answers);
                 if (!is_array($answers)) continue;
 
@@ -106,9 +126,9 @@ function tes_results_page() {
                     $value = 0;
                     $index = array_search($answer, $q_options);
                     if ($index !== false && $num_options > 0) {
-                        // Scale score to 10. Best option (index 0) gets 10.
-                        // The value is proportional to the rank. (e.g. for 5 options, scores are 10, 8, 6, 4, 2)
-                        $value = (($num_options - $index) / $num_options) * 10;
+                        // Scale score to 5. Best option (index 0) gets 5.
+                        // The value is proportional to the rank. (e.g. for 5 options, scores are 5, 4, 3, 2, 1)
+                        $value = (($num_options - $index) / $num_options) * 5;
                     }
                     if ($value > 0) {
                         if (!isset($averages[$q_id])) $averages[$q_id] = ['sum' => 0, 'count' => 0];
@@ -131,12 +151,35 @@ function tes_results_page() {
 
             if ($overall_avg !== null) {
                 echo '<div style="background: #f1f1f1; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-                echo '<h2 style="margin: 0; color: #333;">Overall Average Rating: ' . number_format($overall_avg, 2) . ' / 10</h2>';
+                echo '<h2 style="margin: 0; color: #333;">Overall Average Rating: ' . number_format($overall_avg, 2) . ' / 5</h2>';
                 echo '</div>';
             }
 
+            // Group questions by type
+            $grouped_questions = [];
+            foreach ($all_questions as $q) {
+                $type = isset($q->question_type) ? $q->question_type : 'General';
+                if (!isset($grouped_questions[$type])) {
+                    $grouped_questions[$type] = [];
+                }
+                $grouped_questions[$type][] = $q;
+            }
+
+            // Define order
+            $type_order = ['Explicit Issues', 'Implicit Issues'];
+            foreach (array_keys($grouped_questions) as $type) {
+                if (!in_array($type, $type_order)) {
+                    $type_order[] = $type;
+                }
+            }
+
             // Display results
-            foreach ($all_questions as $q):
+            foreach ($type_order as $type):
+                if (empty($grouped_questions[$type])) continue;
+                ?>
+                <h2 style="margin-top: 30px; border-bottom: 2px solid #ccc; padding-bottom: 10px; color: #23282d;"><?php echo esc_html($type); ?></h2>
+                <?php
+                foreach ($grouped_questions[$type] as $q):
                 $options = array_map('trim', explode(',', $q->options));
                 $avg = isset($averages[$q->id]) && $averages[$q->id]['count'] > 0 ? $averages[$q->id]['sum'] / $averages[$q->id]['count'] : null;
                 $chart_data = [];
@@ -145,9 +188,13 @@ function tes_results_page() {
                 }
                 ?>
                 <div style="margin-bottom:25px;padding:15px;border:1px solid #ddd;">
-                    <strong><?php echo esc_html($q->question_text); ?></strong>
+                    <strong><?php echo esc_html($q->sub_question_title ? $q->sub_question_title : $q->question_text); ?></strong>
+                    <?php if ($q->sub_question_title && $q->question_text && $q->sub_question_title !== $q->question_text): ?>
+                        <div style="font-size: 0.9em; color: #666; margin-top: 5px; font-style: italic;"><?php echo esc_html($q->question_text); ?></div>
+                    <?php endif; ?>
+
                     <?php if ($avg !== null): ?>
-                        <p><strong>Average Rating: <?php echo number_format($avg, 2); ?> / 10</strong></p>
+                        <p><strong>Average Rating: <?php echo number_format($avg, 2); ?> / 5</strong></p>
                     <?php endif; ?>
                     <table class="widefat striped" style="margin-top:10px;">
                         <thead>
@@ -194,7 +241,8 @@ function tes_results_page() {
                     });
                     </script>
                 </div>
-            <?php endforeach; ?>
+            <?php endforeach; 
+            endforeach; ?>
 
             <?php if (!empty($student_averages)): ?>
                 <h2>Student-wise Average Ratings</h2>
@@ -209,7 +257,27 @@ function tes_results_page() {
                         <?php foreach ($student_averages as $name => $avg): ?>
                             <tr>
                                 <td><?php echo esc_html($name); ?></td>
-                                <td><?php echo number_format($avg, 2); ?> / 10</td>
+                                <td><?php echo number_format($avg, 2); ?> / 5</td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+
+            <?php if (!empty($comments)): ?>
+                <h2>Student Comments</h2>
+                <table class="widefat striped">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($comments as $c): ?>
+                            <tr>
+                                <td><?php echo esc_html($c['student']); ?></td>
+                                <td><?php echo nl2br(esc_html($c['text'])); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

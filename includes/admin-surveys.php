@@ -14,7 +14,7 @@ function tes_surveys_page() {
         !empty($_POST['teacher_id'])
     ) {
         $data = [
-            'title'      => sanitize_text_field($_POST['survey_title']),
+            'title'      => sanitize_text_field(wp_unslash($_POST['survey_title'])),
             'teacher_id' => intval($_POST['teacher_id'])
         ];
         if (!empty($_POST['survey_id'])) {

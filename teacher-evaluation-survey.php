@@ -125,12 +125,18 @@ function tes_update_db_schema() {
             // Set a default date for existing records so they aren't treated as infinitely old
             $wpdb->query("UPDATE $submissions_table SET submission_date = NOW() WHERE submission_date IS NULL OR submission_date = '0000-00-00 00:00:00'");
         }
+        if (empty($wpdb->get_results("SHOW COLUMNS FROM $submissions_table LIKE 'comment'"))) {
+            $wpdb->query("ALTER TABLE $submissions_table ADD COLUMN comment TEXT NULL");
+        }
     }
 
     $questions_table = $wpdb->prefix . 'tes_questions';
     if ($wpdb->get_var("SHOW TABLES LIKE '$questions_table'")) {
         if (empty($wpdb->get_results("SHOW COLUMNS FROM $questions_table LIKE 'sub_question_title'"))) {
             $wpdb->query("ALTER TABLE $questions_table ADD COLUMN sub_question_title TEXT NULL AFTER question_text");
+        }
+        if (empty($wpdb->get_results("SHOW COLUMNS FROM $questions_table LIKE 'question_type'"))) {
+            $wpdb->query("ALTER TABLE $questions_table ADD COLUMN question_type VARCHAR(100) DEFAULT 'Explicit Issues' AFTER survey_id");
         }
     }
 }
@@ -146,11 +152,21 @@ function tes_load_questions() {
         )
     );
 
-    if ($questions) {
-        wp_send_json_success($questions);
-    } else {
-        wp_send_json_success([]);
+    if (!$questions) {
+        $questions = [];
     }
+
+    // Add fixed question for Implicit Issues
+    $fixed_question = new stdClass();
+    $fixed_question->id = 'fixed_implicit_role_model';
+    $fixed_question->survey_id = $survey_id;
+    $fixed_question->question_type = 'Implicit Issues';
+    $fixed_question->question_text = 'How well does the teacher model the core values through how he/she behaves with students and with other staff persons?';
+    $fixed_question->sub_question_title = 'I follow the teacher as my role model ';
+    $fixed_question->options = 'To much extent,All Most,Yes  ';
+    $questions[] = $fixed_question;
+
+    wp_send_json_success($questions);
 }
 
 function tes_load_surveys_by_class() {
@@ -226,6 +242,7 @@ function tes_add_question() {
 
     $survey_id = intval($_POST['survey_id']);
     $question_text = sanitize_text_field($_POST['question_text']);
+    $question_type = isset($_POST['question_type']) ? sanitize_text_field($_POST['question_type']) : 'Explicit Issues';
     $sub_question_title = isset($_POST['sub_question_title']) ? sanitize_text_field($_POST['sub_question_title']) : '';
     $options = array_map('sanitize_text_field', $_POST['options']);
     $options_str = implode(',', array_filter($options));
@@ -238,6 +255,7 @@ function tes_add_question() {
         $wpdb->prefix . 'tes_questions',
         [
             'survey_id' => $survey_id,
+            'question_type' => $question_type,
             'question_text' => $question_text,
             'sub_question_title' => $sub_question_title,
             'options' => $options_str
@@ -256,6 +274,7 @@ function tes_add_question() {
         wp_send_json_success([
             'id' => $new_id,
             'question_text' => $question_text,
+            'question_type' => $question_type,
             'sub_question_title' => $sub_question_title,
             'options' => $options_str,
             'survey_title' => $survey_title
@@ -276,6 +295,7 @@ function tes_submit_survey() {
     $student_name = sanitize_text_field($_POST['student_name']);
     $student_id = isset($_POST['student_id']) ? intval($_POST['student_id']) : 0;
     $answers = isset($_POST['answers']) ? $_POST['answers'] : [];
+    $comment = isset($_POST['comment']) ? sanitize_textarea_field($_POST['comment']) : '';
 
     // Sanitize answers
     if (is_array($answers)) {
@@ -323,11 +343,13 @@ function tes_submit_survey() {
             'survey_id' => $survey_id,
             'student_id' => $student_id > 0 ? $student_id : null,
             'student_name' => $student_name,
-            'answers' => $serialized_answers
+            'answers' => $serialized_answers,
+            'comment' => $comment
         ],
         [
             '%d',
             $student_id > 0 ? '%d' : 'NULL',
+            '%s',
             '%s',
             '%s'
         ]

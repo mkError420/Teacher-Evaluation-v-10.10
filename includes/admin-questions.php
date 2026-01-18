@@ -85,14 +85,21 @@ function tes_questions_page() {
                 <?php endforeach; ?>
             </select>
 
+            <select name="question_type" id="question_type" required style="width:100%;margin-bottom:10px;">
+                <option value="Explicit Issues">Explicit Issues</option>
+                <option value="Implicit Issues">Implicit Issues</option>
+            </select>
+
             <input type="text" name="question_text" id="question_text" placeholder="Question Title" required style="width:100%; margin-bottom:10px; padding:8px;">
             <input type="text" name="sub_question_title" id="sub_question_title" placeholder="Sub Question Title (Optional)" style="width:100%; margin-bottom:10px; padding:8px;">
 
-            <p class="description">Provide up to 10 answer options. The first two are required. Empty options will be ignored.</p>
+            <p class="description">Standard Answer Options (Fixed):</p>
             <div id="options-container">
-                <?php for ($i = 1; $i <= 10; $i++): ?>
-                    <input type="text" name="options[]" placeholder="Option <?php echo $i; ?>" <?php if ($i <= 2) echo 'required'; ?> style="width:48%; margin-bottom:5px; padding:8px;">
-                <?php endfor; ?>
+                <input type="text" name="options[]" value="Never" readonly style="width:48%; margin-bottom:5px; padding:8px; background-color: #f9f9f9;">
+                <input type="text" name="options[]" value="Once in a while" readonly style="width:48%; margin-bottom:5px; padding:8px; background-color: #f9f9f9;">
+                <input type="text" name="options[]" value="Sometimes" readonly style="width:48%; margin-bottom:5px; padding:8px; background-color: #f9f9f9;">
+                <input type="text" name="options[]" value="Most of the times" readonly style="width:48%; margin-bottom:5px; padding:8px; background-color: #f9f9f9;">
+                <input type="text" name="options[]" value="Almost always" readonly style="width:48%; margin-bottom:5px; padding:8px; background-color: #f9f9f9;">
             </div>
 
             <button type="submit"
@@ -130,6 +137,7 @@ function tes_questions_page() {
                 <tr>
                     <td id="cb" class="manage-column column-cb check-column"><input type="checkbox" id="cb-select-all-1"></td>
                     <th>Survey</th>
+                    <th>Type</th>
                     <th>Question</th>
                     <th>Sub Question</th>
                     <th>Options</th>
@@ -141,6 +149,7 @@ function tes_questions_page() {
                     <tr>
                         <th scope="row" class="check-column"><input type="checkbox" name="question_ids[]" value="<?php echo esc_attr($q->id); ?>"></th>
                         <td><?php echo esc_html($q->survey_title); ?></td>
+                        <td><?php echo esc_html($q->question_type); ?></td>
                         <td><?php echo esc_html($q->question_text); ?></td>
                         <td><?php echo esc_html($q->sub_question_title); ?></td>
                         <td><?php echo esc_html($q->options); ?></td>
@@ -152,7 +161,7 @@ function tes_questions_page() {
                         </td>
                     </tr>
                 <?php endforeach; else: ?>
-                    <tr><td colspan="6">No questions found.</td></tr>
+                    <tr><td colspan="7">No questions found.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
@@ -191,7 +200,9 @@ function tes_questions_page() {
                         if (response.success) {
                             var data = response.data;
                             var newRow = '<tr>' +
+                                '<th scope="row" class="check-column"><input type="checkbox" name="question_ids[]" value="' + data.id + '"></th>' +
                                 '<td>' + data.survey_title + '</td>' +
+                                '<td>' + data.question_type + '</td>' +
                                 '<td>' + data.question_text + '</td>' +
                                 '<td>' + (data.sub_question_title || '') + '</td>' +
                                 '<td>' + data.options + '</td>' +
@@ -199,6 +210,7 @@ function tes_questions_page() {
                                 '</tr>';
                             $('tbody').prepend(newRow);
                             $('#tes-add-question-form')[0].reset();
+                            $('#question_type').trigger('change');
                         } else {
                             alert(response.data);
                         }
@@ -270,6 +282,29 @@ function tes_questions_page() {
                 var checked = this.checked;
                 $('input[name="question_ids[]"]').prop('checked', checked);
             });
+
+            // Handle Question Type Change
+            $('#question_type').on('change', function() {
+                var type = $(this).val();
+                var $qText = $('#question_text');
+                var $subQ = $('#sub_question_title');
+
+                if (type === 'Explicit Issues') {
+                    $qText.val('How well does the teacher teach the core subject?');
+                    $subQ.prop('required', true).attr('placeholder', 'Sub Question Title (Required)');
+                } else if (type === 'Implicit Issues') {
+                    $qText.val('How well does the teacher model the core values through how he/she behaves with students and with other staff persons?');
+                    $subQ.prop('required', true).attr('placeholder', 'Sub Question Title (Required)');
+                } else {
+                    if ($qText.val() === 'How well does the teacher teach the core subject?' || $qText.val() === 'How well does the teacher model the core values through how he/she behaves with students and with other staff persons?') {
+                        $qText.val('');
+                    }
+                    $subQ.prop('required', false).attr('placeholder', 'Sub Question Title (Optional)');
+                }
+            });
+
+            // Initialize state
+            $('#question_type').trigger('change');
         });
         </script>
     </div>

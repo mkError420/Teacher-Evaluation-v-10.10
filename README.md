@@ -21,7 +21,7 @@ Teacher Evaluation Survey is a comprehensive WordPress plugin designed to facili
 *   **Question Management:** Add customizable multiple-choice questions (up to 10 options) to specific surveys.
 *   **Results Dashboard:** 
     *   Visual analytics using Chart.js (Pie charts).
-    *   Overall average ratings (calculated on a scale of 10).
+    *   Overall average ratings (calculated on a scale of 5).
     *   Detailed question-wise breakdown.
     *   Student-wise submission averages.
 

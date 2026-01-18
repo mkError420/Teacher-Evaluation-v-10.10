@@ -15,6 +15,7 @@ jQuery(function($) {
         if (!className) {
             $form.find('.tes-survey-select').html('<option value="">Select Teacher Survey</option>').hide().prop('required', false);
             $form.find('.tes-questions-area').empty();
+            $form.find('.tes-comment-section').hide();
             return;
         }
 
@@ -52,6 +53,7 @@ jQuery(function($) {
                     $form.find('.tes-no-survey-msg').show();
                 }
                 $form.find('.tes-questions-area').empty();
+                $form.find('.tes-comment-section').hide();
             },
             error: function(xhr, status, error) {
                 console.error('AJAX Error:', status, error);
@@ -80,6 +82,7 @@ jQuery(function($) {
 
         if (!survey_id) {
             $form.find('.tes-questions-area').empty();
+            $form.find('.tes-comment-section').hide();
             return;
         }
 
@@ -95,25 +98,57 @@ jQuery(function($) {
             success: function(response) {
                 if (response.success && response.data) {
                     var html = '';
+                    var groupedQuestions = {};
+
+                    // Group questions by type
                     $.each(response.data, function(i, question) {
-                        var options = question.options.split(',').map(function(opt) { return opt.trim(); });
-                        
-                        html += '<div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid #667eea;">';
-                        html += '<label style="font-weight: bold; color: #333; display: block; margin-bottom: 8px;">' + question.question_text + '</label>';
-                        if (question.sub_question_title) {
-                            html += '<p style="color: #666; margin-bottom: 10px; font-size: 0.9em; margin-top: -5px;">' + question.sub_question_title + '</p>';
+                        var type = question.question_type || 'General';
+                        if (!groupedQuestions[type]) {
+                            groupedQuestions[type] = [];
                         }
-                        
-                        $.each(options, function(j, option) {
-                            html += '<label style="display: inline-block; margin-right: 15px; padding: 8px 12px; background: linear-gradient(145deg, #f0f0f0, #d0d0d0); border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s ease; margin-bottom: 5px;">';
-                            html += '<input type="radio" name="answers[' + question.id + ']" value="' + option + '" style="margin-right: 5px; transform: scale(1.2); accent-color: #667eea;">';
-                            html += option;
-                            html += '</label>';
-                        });
-                        
-                        html += '</div>';
+                        groupedQuestions[type].push(question);
                     });
+
+                    // Define display order
+                    var typeOrder = ['Explicit Issues', 'Implicit Issues'];
+                    for (var t in groupedQuestions) {
+                        if (typeOrder.indexOf(t) === -1) {
+                            typeOrder.push(t);
+                        }
+                    }
+
+                    $.each(typeOrder, function(idx, type) {
+                        if (groupedQuestions[type]) {
+                            var questions = groupedQuestions[type];
+                            if (questions.length === 0) return;
+
+                            var sectionDesc = questions[0].question_text;
+
+                            html += '<div class="tes-section" style="margin-bottom: 30px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">';
+                            html += '<h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #667eea; padding-bottom: 10px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">' + type + '</h3>';
+                            html += '<p style="font-size: 1.1em; color: #555; margin-bottom: 25px; font-style: italic; background: #f8f9fa; padding: 10px; border-radius: 4px;">' + sectionDesc + '</p>';
+
+                            $.each(questions, function(j, q) {
+                                var options = q.options.split(',').map(function(opt) { return opt.trim(); });
+                                var questionLabel = q.sub_question_title ? q.sub_question_title : q.question_text;
+
+                                html += '<div class="tes-question-block" style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee;">';
+                                html += '<p style="font-weight: 600; color: #333; margin-bottom: 15px; font-size: 1.05em;">' + (j + 1) + '. ' + questionLabel + ' <span style="color:#dc3545;">*</span></p>';
+                                html += '<div style="display: flex; flex-wrap: wrap; gap: 10px;">';
+                                $.each(options, function(k, option) {
+                                    html += '<label style="display: inline-flex; align-items: center; padding: 8px 15px; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; user-select: none;">';
+                                    html += '<input type="radio" name="answers[' + q.id + ']" value="' + option + '" required style="margin-right: 8px; accent-color: #667eea; cursor: pointer;">';
+                                    html += '<span style="color: #444;">' + option + '</span>';
+                                    html += '</label>';
+                                });
+                                html += '</div></div>';
+                            });
+                            html += '</div>';
+                        }
+                    });
+
                     $form.find('.tes-questions-area').html(html);
+                    $form.find('.tes-comment-section').show();
                 }
             }
         });
@@ -124,6 +159,20 @@ jQuery(function($) {
         e.preventDefault();
  
         var $form = $(this);
+        var allAnswered = true;
+
+        $form.find('.tes-question-block').each(function() {
+            if ($(this).find('input[type="radio"]:checked').length === 0) {
+                allAnswered = false;
+                return false;
+            }
+        });
+
+        if (!allAnswered) {
+            alert("Please select all question field");
+            return;
+        }
+
         var formData = new FormData(this);
         formData.append('action', 'tes_submit_survey');
 
@@ -139,6 +188,7 @@ jQuery(function($) {
                     $form.parent().find('.tes-success-msg').show();
                     $form[0].reset();
                     $form.find('.tes-questions-area').empty();
+                    $form.find('.tes-comment-section').hide();
                     
                     // Reload surveys to remove the one just taken
                     var className = $form.find('.tes-class-auto').val();

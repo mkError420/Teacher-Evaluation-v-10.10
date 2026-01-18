@@ -110,9 +110,9 @@ function tes_student_survey_shortcode() {
             <a href="?tes_action=logout" style="color: #dc3545; text-decoration: none; font-weight: bold; font-size: 14px;">Logout</a>
         </div>
 
-    <div class="tes-survey-form" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: perspective(1000px) rotateX(5deg); margin: 20px auto; max-width: 600px;">
+    <div class="tes-survey-form" style="background: #fff; padding: 30px; border: 1px solid #e5e5e5; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin: 20px auto; max-width: 800px;">
 
-        <form class="tes-survey-form" style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 10px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);">
+        <form class="tes-survey-form" style="" novalidate>
 
             <input type="hidden" name="nonce" value="<?php echo wp_create_nonce('tes_submit_survey'); ?>">
 
@@ -140,6 +140,11 @@ function tes_student_survey_shortcode() {
 
             <div class="tes-questions-area" style="margin-bottom: 15px;"></div>
 
+            <div class="tes-comment-section" style="margin-bottom: 15px; display: none;">
+                <label style="font-weight: bold; display: block; margin-bottom: 5px; color: #333;">If any other comments please write down below (Optional)</label>
+                <textarea name="comment" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit;"></textarea>
+            </div>
+
             <button type="submit"
                     class="button button-primary"
                     style="margin-top:15px; padding: 12px 24px; border: none; border-radius: 8px; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; font-size: 16px; font-weight: bold; box-shadow: 0 6px 12px rgba(0,0,0,0.2); cursor: pointer; transition: all 0.3s ease; transform: translateY(0);">
@@ -148,7 +153,7 @@ function tes_student_survey_shortcode() {
 
         </form>
 
-        <div class="tes-success-msg" style="display:none; color:green; font-weight:bold; margin-top: 15px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        <div class="tes-success-msg" style="display:none; color: #155724; background-color: #d4edda; border-color: #c3e6cb; padding: 15px; margin-top: 20px; border: 1px solid #c3e6cb; border-radius: 4px;">
             ✔ Feedback submitted successfully.
         </div>
 
