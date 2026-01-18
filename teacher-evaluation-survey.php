@@ -63,6 +63,9 @@ add_action('wp_ajax_tes_add_question', 'tes_add_question');
 // AJAX: Import Students
 add_action('wp_ajax_tes_import_students', 'tes_import_students');
 
+// AJAX: Import Teachers
+add_action('wp_ajax_tes_import_teachers', 'tes_import_teachers');
+
 // AJAX: Student Search Autocomplete
 add_action('wp_ajax_tes_student_search_autocomplete', 'tes_student_search_autocomplete');
 
@@ -121,6 +124,13 @@ function tes_update_db_schema() {
             $wpdb->query("ALTER TABLE $submissions_table ADD COLUMN submission_date DATETIME DEFAULT CURRENT_TIMESTAMP");
             // Set a default date for existing records so they aren't treated as infinitely old
             $wpdb->query("UPDATE $submissions_table SET submission_date = NOW() WHERE submission_date IS NULL OR submission_date = '0000-00-00 00:00:00'");
+        }
+    }
+
+    $questions_table = $wpdb->prefix . 'tes_questions';
+    if ($wpdb->get_var("SHOW TABLES LIKE '$questions_table'")) {
+        if (empty($wpdb->get_results("SHOW COLUMNS FROM $questions_table LIKE 'sub_question_title'"))) {
+            $wpdb->query("ALTER TABLE $questions_table ADD COLUMN sub_question_title TEXT NULL AFTER question_text");
         }
     }
 }
@@ -216,6 +226,7 @@ function tes_add_question() {
 
     $survey_id = intval($_POST['survey_id']);
     $question_text = sanitize_text_field($_POST['question_text']);
+    $sub_question_title = isset($_POST['sub_question_title']) ? sanitize_text_field($_POST['sub_question_title']) : '';
     $options = array_map('sanitize_text_field', $_POST['options']);
     $options_str = implode(',', array_filter($options));
 
@@ -228,6 +239,7 @@ function tes_add_question() {
         [
             'survey_id' => $survey_id,
             'question_text' => $question_text,
+            'sub_question_title' => $sub_question_title,
             'options' => $options_str
         ]
     );
@@ -244,6 +256,7 @@ function tes_add_question() {
         wp_send_json_success([
             'id' => $new_id,
             'question_text' => $question_text,
+            'sub_question_title' => $sub_question_title,
             'options' => $options_str,
             'survey_title' => $survey_title
         ]);
@@ -440,6 +453,84 @@ function tes_import_students() {
     wp_send_json_success("Successfully imported $imported students.");
 }
 
+function tes_import_teachers() {
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Unauthorized');
+    }
+
+    if (empty($_FILES['import_file'])) {
+        wp_send_json_error('No file uploaded');
+    }
+
+    $file = $_FILES['import_file'];
+    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    if (strtolower($ext) !== 'csv') {
+        wp_send_json_error('Please upload a CSV file.');
+    }
+
+    $handle = fopen($file['tmp_name'], 'r');
+    if ($handle === false) {
+        wp_send_json_error('Could not open file.');
+    }
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'tes_teachers';
+    
+    $headers = fgetcsv($handle);
+    if (!$headers) {
+        wp_send_json_error('File is empty or invalid.');
+    }
+
+    // Normalize headers
+    $headers = array_map(function($h) {
+        $h = trim($h, "\xEF\xBB\xBF \t\n\r\0\x0B");
+        return strtolower(str_replace(' ', '_', $h));
+    }, $headers);
+
+    $column_map = [
+        'name' => 'name',
+        'teacher_name' => 'name',
+        'department' => 'department',
+        'dept' => 'department',
+        'id' => 'teacher_id_number',
+        'teacher_id' => 'teacher_id_number',
+        'teacher_id_number' => 'teacher_id_number',
+        'phase' => 'phase',
+        'class' => 'class_name',
+        'class_name' => 'class_name'
+    ];
+
+    $col_indexes = [];
+    foreach ($headers as $index => $header) {
+        if (isset($column_map[$header])) {
+            $col_indexes[$column_map[$header]] = $index;
+        }
+    }
+
+    if (empty($col_indexes)) {
+        wp_send_json_error('No valid columns found. Allowed headers: Name, Department, Teacher ID, Phase, Class.');
+    }
+
+    $imported = 0;
+    while (($data = fgetcsv($handle)) !== false) {
+        $insert_data = [];
+        foreach ($col_indexes as $col => $index) {
+            if (isset($data[$index])) {
+                $insert_data[$col] = sanitize_text_field($data[$index]);
+            }
+        }
+
+        if (!empty($insert_data) && !empty($insert_data['name'])) {
+            if ($wpdb->insert($table_name, $insert_data)) {
+                $imported++;
+            }
+        }
+    }
+
+    fclose($handle);
+    wp_send_json_success("Successfully imported $imported teachers.");
+}
+
 function tes_question_search_autocomplete() {
     global $wpdb;
     $term = isset($_GET['term']) ? sanitize_text_field($_GET['term']) : '';
@@ -458,9 +549,9 @@ function tes_question_search_autocomplete() {
         "SELECT q.id, q.question_text, s.title as survey_title
          FROM $questions_table q
          LEFT JOIN $surveys_table s ON q.survey_id = s.id
-         WHERE q.question_text LIKE %s OR s.title LIKE %s
+         WHERE q.question_text LIKE %s OR q.sub_question_title LIKE %s OR s.title LIKE %s
          LIMIT 10",
-        $like, $like
+        $like, $like, $like
     ));
     
     wp_send_json_success($results);

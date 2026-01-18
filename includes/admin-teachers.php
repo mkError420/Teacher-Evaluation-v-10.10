@@ -332,6 +332,23 @@ function tes_teachers_page() {
             <?php endif; ?>
         </form>
 
+        <!-- Import Teachers Form -->
+        <div class="card" style="margin-bottom: 20px; padding: 15px; background: #fff; border: 1px solid #ccd0d4; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
+            <h3>Import Teachers from CSV</h3>
+            <p class="description">
+                Upload a CSV file with headers matching the database columns.<br>
+                <strong>Allowed Columns:</strong> Name, Department, Teacher ID, Phase, Class.
+            </p>
+            
+            <form id="tes-import-teacher-form" enctype="multipart/form-data">
+                <input type="file" name="import_file" accept=".csv" required>
+                <button type="submit" class="button button-primary">Import Teachers</button>
+                <span class="spinner" style="float: none; margin-top: 0;"></span>
+            </form>
+            
+            <div id="tes-import-result" style="margin-top: 10px; font-weight: bold;"></div>
+        </div>
+
         <h2>All Teachers</h2>
 
         <form method="post">
@@ -518,6 +535,39 @@ function tes_teachers_page() {
             $('select[name="teacher_department"]').on('change', updateDepartmentInputs);
             $('select[name="teacher_phase"]').on('change', updatePhaseInputs);
             $('select[name="teacher_class"]').on('change', updateClassInputs);
+
+            // Import Teacher Form Handler
+            $('#tes-import-teacher-form').on('submit', function(e) {
+                e.preventDefault();
+                var form = $(this);
+                var formData = new FormData(this);
+                formData.append('action', 'tes_import_teachers');
+                
+                form.find('.spinner').addClass('is-active');
+                $('#tes-import-result').html('');
+
+                $.ajax({
+                    url: ajaxurl, 
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        form.find('.spinner').removeClass('is-active');
+                        if (response.success) {
+                            $('#tes-import-result').html('<span style="color:green;">' + response.data + '</span>');
+                            form[0].reset();
+                            setTimeout(function() { location.reload(); }, 2000);
+                        } else {
+                            $('#tes-import-result').html('<span style="color:red;">' + response.data + '</span>');
+                        }
+                    },
+                    error: function() {
+                        form.find('.spinner').removeClass('is-active');
+                        $('#tes-import-result').html('<span style="color:red;">Server error. Please try again.</span>');
+                    }
+                });
+            });
 
             // Initialize on page load
             updateDepartmentInputs();

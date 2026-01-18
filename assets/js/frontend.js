@@ -100,6 +100,9 @@ jQuery(function($) {
                         
                         html += '<div style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid #667eea;">';
                         html += '<label style="font-weight: bold; color: #333; display: block; margin-bottom: 8px;">' + question.question_text + '</label>';
+                        if (question.sub_question_title) {
+                            html += '<p style="color: #666; margin-bottom: 10px; font-size: 0.9em; margin-top: -5px;">' + question.sub_question_title + '</p>';
+                        }
                         
                         $.each(options, function(j, option) {
                             html += '<label style="display: inline-block; margin-right: 15px; padding: 8px 12px; background: linear-gradient(145deg, #f0f0f0, #d0d0d0); border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s ease; margin-bottom: 5px;">';

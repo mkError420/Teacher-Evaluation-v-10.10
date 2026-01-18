@@ -63,7 +63,7 @@ function tes_questions_page() {
 
     if (!empty($search_term)) {
         $like = '%' . $wpdb->esc_like($search_term) . '%';
-        $questions_query .= $wpdb->prepare(" WHERE q.question_text LIKE %s OR s.title LIKE %s", $like, $like);
+        $questions_query .= $wpdb->prepare(" WHERE q.question_text LIKE %s OR q.sub_question_title LIKE %s OR s.title LIKE %s", $like, $like, $like);
     }
 
     $questions_query .= " ORDER BY q.id DESC";
@@ -86,6 +86,7 @@ function tes_questions_page() {
             </select>
 
             <input type="text" name="question_text" id="question_text" placeholder="Question Title" required style="width:100%; margin-bottom:10px; padding:8px;">
+            <input type="text" name="sub_question_title" id="sub_question_title" placeholder="Sub Question Title (Optional)" style="width:100%; margin-bottom:10px; padding:8px;">
 
             <p class="description">Provide up to 10 answer options. The first two are required. Empty options will be ignored.</p>
             <div id="options-container">
@@ -130,6 +131,7 @@ function tes_questions_page() {
                     <td id="cb" class="manage-column column-cb check-column"><input type="checkbox" id="cb-select-all-1"></td>
                     <th>Survey</th>
                     <th>Question</th>
+                    <th>Sub Question</th>
                     <th>Options</th>
                     <th>Action</th>
                 </tr>
@@ -140,6 +142,7 @@ function tes_questions_page() {
                         <th scope="row" class="check-column"><input type="checkbox" name="question_ids[]" value="<?php echo esc_attr($q->id); ?>"></th>
                         <td><?php echo esc_html($q->survey_title); ?></td>
                         <td><?php echo esc_html($q->question_text); ?></td>
+                        <td><?php echo esc_html($q->sub_question_title); ?></td>
                         <td><?php echo esc_html($q->options); ?></td>
                         <td>
                             <a class="button button-secondary"
@@ -149,7 +152,7 @@ function tes_questions_page() {
                         </td>
                     </tr>
                 <?php endforeach; else: ?>
-                    <tr><td colspan="5">No questions found.</td></tr>
+                    <tr><td colspan="6">No questions found.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
@@ -190,6 +193,7 @@ function tes_questions_page() {
                             var newRow = '<tr>' +
                                 '<td>' + data.survey_title + '</td>' +
                                 '<td>' + data.question_text + '</td>' +
+                                '<td>' + (data.sub_question_title || '') + '</td>' +
                                 '<td>' + data.options + '</td>' +
                                 '<td><a class="button button-secondary" href="?page=tes-questions&delete=' + data.id + '">Delete</a></td>' +
                                 '</tr>';
